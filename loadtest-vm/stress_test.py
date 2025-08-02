@@ -10,36 +10,39 @@ import socket
 # ========== CPU STRESS ==========
 def cpu_stress():
     while True:
-        _ = 1 + 1
+        pass  # Ocupa CPU continuamente
 
 # ========== MEMORY STRESS ==========
 def memory_stress(size_mb):
-    data = []
-    block = b'x' * 1024 * 1024  # 1 MB
-    for _ in range(size_mb):
-        data.append(block)
-    while True:
-        time.sleep(1)
+    block = b'x' * 1024 * 1024  # 1MB
+    memory = [block] * size_mb
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
 
 # ========== DISK STRESS ==========
-def disk_stress(temp_dir):
-    path = os.path.join(temp_dir, "stress_file.tmp")
-    with open(path, "wb") as f:
-        while True:
-            f.write(os.urandom(1024 * 1024))  # 1 MB
-            f.flush()
-            os.fsync(f.fileno())
+def disk_stress(path):
+    try:
+        with open(path, "wb") as f:
+            while True:
+                f.write(os.urandom(1024 * 1024))  # 1MB
+                f.flush()
+                os.fsync(f.fileno())
+    except KeyboardInterrupt:
+        pass
 
-# ========== NETWORK STRESS (localhost) ==========
+# ========== NETWORK SERVER ==========
 def network_server(port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(("127.0.0.1", port))
-    s.listen()
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(("127.0.0.1", port))
+    server.listen(1)
     while True:
-        conn, _ = s.accept()
-        threading.Thread(target=network_handler, args=(conn,), daemon=True).start()
+        conn, _ = server.accept()
+        threading.Thread(target=network_echo, args=(conn,), daemon=True).start()
 
-def network_handler(conn):
+def network_echo(conn):
     try:
         while True:
             data = conn.recv(4096)
@@ -49,6 +52,7 @@ def network_handler(conn):
     finally:
         conn.close()
 
+# ========== NETWORK CLIENT ==========
 def network_client(port):
     while True:
         try:
@@ -60,54 +64,57 @@ def network_client(port):
         except Exception:
             time.sleep(1)
 
-# ========== MAIN FUNCTION ==========
+# ========== MAIN ==========
 def main(duration):
-    print(f"Starting stress test for {duration} seconds...")
+    print(f"⏱️ Iniciando teste de carga por {duration} segundos...")
 
-    temp_dir = tempfile.mkdtemp()
-    port = 50007
-    procs = []
+    processes = []
+    temp_dir = tempfile.gettempdir()
+    disk_path = os.path.join(temp_dir, "stress_disk.tmp")
+    net_port = 50007
 
-    # CPU - 1 process per core
+    # CPU
     for _ in range(multiprocessing.cpu_count()):
         p = multiprocessing.Process(target=cpu_stress)
         p.start()
-        procs.append(p)
+        processes.append(p)
 
-    # Memory - allocate 100MB
-    p = multiprocessing.Process(target=memory_stress, args=(100,))
-    p.start()
-    procs.append(p)
+    # Memory (~100 MB)
+    mem_proc = multiprocessing.Process(target=memory_stress, args=(100,))
+    mem_proc.start()
+    processes.append(mem_proc)
 
-    # Disk - write continuously
-    p = multiprocessing.Process(target=disk_stress, args=(temp_dir,))
-    p.start()
-    procs.append(p)
+    # Disk
+    disk_proc = multiprocessing.Process(target=disk_stress, args=(disk_path,))
+    disk_proc.start()
+    processes.append(disk_proc)
 
-    # Network - server + client
-    threading.Thread(target=network_server, args=(port,), daemon=True).start()
-    p = multiprocessing.Process(target=network_client, args=(port,))
-    p.start()
-    procs.append(p)
+    # Network server
+    server_thread = threading.Thread(target=network_server, args=(net_port,), daemon=True)
+    server_thread.start()
 
-    # Timer
+    # Network client
+    net_proc = multiprocessing.Process(target=network_client, args=(net_port,))
+    net_proc.start()
+    processes.append(net_proc)
+
+    # Espera o tempo solicitado
     time.sleep(duration)
 
-    print("Stopping all stress processes...")
-    for p in procs:
+    print("✅ Finalizando processos...")
+    for p in processes:
         p.terminate()
         p.join()
 
     try:
-        os.remove(os.path.join(temp_dir, "stress_file.tmp"))
-        os.rmdir(temp_dir)
+        os.remove(disk_path)
     except Exception:
         pass
 
-    print("Stress test completed.")
+    print("🏁 Teste de carga finalizado.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CPU, Memory, Disk, Network stress test")
-    parser.add_argument("-t", "--time", type=int, default=30, help="Duration of the test in seconds (default: 30)")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--time", type=int, default=30, help="Duração em segundos (padrão: 30)")
     args = parser.parse_args()
     main(args.time)
