@@ -1,0 +1,27 @@
+apiVersion: loki.grafana.com/v1
+kind: LokiStack
+metadata:
+  name: logging-loki
+  namespace: openshift-logging
+spec:
+  hashRing:
+    type: memberlist
+  limits:
+    global:
+      queries:
+        queryTimeout: 3m
+      retention:
+        days: 3
+  managementState: Managed
+  replicationFactor: 1
+  size: 1x.extra-small
+  storage:
+    schemas:
+      - effectiveDate: '2024-10-11'
+        version: v13
+    secret:
+      name: logging-loki-azure
+      type: azure
+  storageClassName: azurefile-csi
+  tenants:
+    mode: openshift-logging

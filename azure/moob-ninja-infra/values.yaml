@@ -1,0 +1,10 @@
+machineRole: "infra"
+
+machineLabels:
+  cluster.ocs.openshift.io/openshift-storage: ""
+
+machineTaints:
+
+machineSetSpec:
+  tags:
+    node_role: infra

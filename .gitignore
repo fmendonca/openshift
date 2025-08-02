@@ -1,0 +1,107 @@
+# Ignora o arquivo pull-secret.txt em qualquer subpasta
+**/pull-secret.txt
+
+# Ignora arquivos temporários
+*.log
+*.tmp
+*.swp
+*.bak
+*.old
+*.orig
+
+# Ignora arquivos e pastas de sistema
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# Arquivos de backup do editor
+*~
+*.sublime-workspace
+*.sublime-project
+
+# Arquivos de compilação
+build/
+dist/
+out/
+*.o
+*.so
+*.a
+*.pyc
+*.pyo
+*.class
+__pycache__/
+
+# Diretórios de ambientes virtuais
+.env/
+.venv/
+env/
+venv/
+ENV/
+ENV.bak/
+
+# Diretórios de dependências
+node_modules/
+bower_components/
+vendor/
+
+# Ignora configurações locais de IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Arquivos de controle de versão temporários
+*.rej
+*.patch
+*.orig
+*.merge_backup
+
+# Arquivos do sistema de build
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.make
+
+# Arquivos de container/local
+.docker/
+*.tar
+*.img
+
+# Arquivos de pacotes
+*.tar.gz
+*.zip
+*.rar
+*.7z
+*.deb
+*.rpm
+
+# Arquivos de chaves e segredos
+*.pem
+*.key
+*.crt
+*.p12
+*.enc
+secrets.*
+.env.secret
+.env.*
+
+# Arquivos de lock (dependências)
+package-lock.json
+yarn.lock
+pipfile.lock
+poetry.lock
+
+# Test coverage
+coverage/
+*.lcov
+.nyc_output/
+.coverage
+coverage.xml
+htmlcov/
+
+# Arquivos temporários do Git
+.gitmodules~
+.gitignore~
+
