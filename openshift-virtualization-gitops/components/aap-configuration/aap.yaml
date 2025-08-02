@@ -1,0 +1,24 @@
+apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  labels:
+    app.kubernetes.io/name: aap
+  name: aap
+  namespace: aap
+spec:
+  route_tls_termination_mechanism: Edge
+  no_log: true
+  redis_mode: standalone
+  api:
+    log_level: INFO
+    replicas: 1
+  eda:
+    disabled: false
+  hub:
+    disabled: false
+    object_storage_s3_secret: aap-hub-s3
+    pulp_settings:
+      AWS_S3_URL_PROTOCOL: "http:"
+  lightspeed:
+    disabled: true
+             
