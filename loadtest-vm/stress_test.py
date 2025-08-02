@@ -2,7 +2,6 @@ import argparse
 import multiprocessing
 import threading
 import time
-import psutil
 import os
 import tempfile
 import socket
@@ -10,34 +9,28 @@ import socket
 # ========== CPU STRESS ==========
 def cpu_stress():
     while True:
-        pass  # Ocupa CPU continuamente
+        pass
 
 # ========== MEMORY STRESS ==========
 def memory_stress(size_mb):
     block = b'x' * 1024 * 1024  # 1MB
     memory = [block] * size_mb
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        pass
+    while True:
+        time.sleep(1)
 
 # ========== DISK STRESS ==========
 def disk_stress(path):
-    try:
-        with open(path, "wb") as f:
-            while True:
-                f.write(os.urandom(1024 * 1024))  # 1MB
-                f.flush()
-                os.fsync(f.fileno())
-    except KeyboardInterrupt:
-        pass
+    with open(path, "wb") as f:
+        while True:
+            f.write(os.urandom(1024 * 1024))  # 1MB
+            f.flush()
+            os.fsync(f.fileno())
 
 # ========== NETWORK SERVER ==========
 def network_server(port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(("127.0.0.1", port))
-    server.listen(1)
+    server.listen()
     while True:
         conn, _ = server.accept()
         threading.Thread(target=network_echo, args=(conn,), daemon=True).start()
@@ -65,56 +58,67 @@ def network_client(port):
             time.sleep(1)
 
 # ========== MAIN ==========
-def main(duration):
-    print(f"⏱️ Iniciando teste de carga por {duration} segundos...")
+def main(args):
+    print(f"⏱️ Executando stress test por {args.time} segundos...")
 
     processes = []
     temp_dir = tempfile.gettempdir()
-    disk_path = os.path.join(temp_dir, "stress_disk.tmp")
     net_port = 50007
 
     # CPU
-    for _ in range(multiprocessing.cpu_count()):
-        p = multiprocessing.Process(target=cpu_stress)
+    if args.cpu:
+        for _ in range(args.cpu):
+            p = multiprocessing.Process(target=cpu_stress)
+            p.start()
+            processes.append(p)
+
+    # Memória
+    if args.memory:
+        p = multiprocessing.Process(target=memory_stress, args=(args.memory,))
         p.start()
         processes.append(p)
 
-    # Memory (~100 MB)
-    mem_proc = multiprocessing.Process(target=memory_stress, args=(100,))
-    mem_proc.start()
-    processes.append(mem_proc)
+    # Disco
+    if args.disk:
+        for i in range(args.disk):
+            path = os.path.join(temp_dir, f"stress_disk_{i}.tmp")
+            p = multiprocessing.Process(target=disk_stress, args=(path,))
+            p.start()
+            processes.append(p)
 
-    # Disk
-    disk_proc = multiprocessing.Process(target=disk_stress, args=(disk_path,))
-    disk_proc.start()
-    processes.append(disk_proc)
+    # Rede
+    if args.network:
+        server_thread = threading.Thread(target=network_server, args=(net_port,), daemon=True)
+        server_thread.start()
 
-    # Network server
-    server_thread = threading.Thread(target=network_server, args=(net_port,), daemon=True)
-    server_thread.start()
+        for _ in range(args.network):
+            p = multiprocessing.Process(target=network_client, args=(net_port,))
+            p.start()
+            processes.append(p)
 
-    # Network client
-    net_proc = multiprocessing.Process(target=network_client, args=(net_port,))
-    net_proc.start()
-    processes.append(net_proc)
-
-    # Espera o tempo solicitado
-    time.sleep(duration)
+    # Aguarda o tempo solicitado
+    time.sleep(args.time)
 
     print("✅ Finalizando processos...")
     for p in processes:
         p.terminate()
         p.join()
 
-    try:
-        os.remove(disk_path)
-    except Exception:
-        pass
+    # Remove arquivos temporários de disco
+    for i in range(args.disk):
+        try:
+            os.remove(os.path.join(temp_dir, f"stress_disk_{i}.tmp"))
+        except Exception:
+            pass
 
-    print("🏁 Teste de carga finalizado.")
+    print("🏁 Teste finalizado com sucesso.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--time", type=int, default=30, help="Duração em segundos (padrão: 30)")
+    parser = argparse.ArgumentParser(description="Teste de carga parametrizável")
+    parser.add_argument("-t", "--time", type=int, default=30, help="Duração do teste (segundos)")
+    parser.add_argument("--cpu", type=int, default=0, help="Número de processos de carga de CPU")
+    parser.add_argument("--memory", type=int, default=0, help="Memória a alocar em MB")
+    parser.add_argument("--disk", type=int, default=0, help="Número de processos de escrita em disco")
+    parser.add_argument("--network", type=int, default=0, help="Número de clientes de rede TCP")
     args = parser.parse_args()
-    main(args.time)
+    main(args)
