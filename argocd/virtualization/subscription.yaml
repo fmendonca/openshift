@@ -5,7 +5,7 @@ metadata:
   namespace: openshift-cnv
 spec:
   channel: stable
-  name: kubevirt-hyperconverged
+  name: openshift-virtualization
   source: redhat-operators
   sourceNamespace: openshift-marketplace
   installPlanApproval: Automatic
