@@ -3,6 +3,8 @@ kind: Placement
 metadata:
   name: placement-kubevirt
   namespace: open-cluster-management-policies
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   clusterSets:
     - default
