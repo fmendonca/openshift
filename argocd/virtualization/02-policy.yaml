@@ -4,7 +4,7 @@ metadata:
   name: policy-kubevirt-operator
   namespace: open-cluster-management-policies
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   disabled: false
   remediationAction: enforce
