@@ -1,0 +1,58 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-kube-descheduler
+  namespace: open-cluster-management-policies
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1beta1
+        kind: OperatorPolicy
+        metadata:
+          name: kube-descheduler-policy
+          namespace: open-cluster-management-policies
+        spec:
+          complianceType: musthave
+          operatorGroup:
+            name: cluster-kube-descheduler-operator
+            namespace: openshift-kube-descheduler-operator
+            targetNamespaces:
+              - openshift-kube-descheduler-operator
+          remediationAction: enforce
+          severity: medium
+          subscription:
+            name: cluster-kube-descheduler-operator
+            namespace: openshift-kube-descheduler-operator
+            channel: stable
+            source: redhat-operators
+            sourceNamespace: openshift-marketplace
+          upgradeApproval: Automatic
+          versions:
+            - clusterkubedescheduleroperator.v5.1.3
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: kube-descheduler-instance
+        spec:
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: operator.openshift.io/v1
+                kind: KubeDescheduler
+                metadata:
+                  name: cluster
+                  namespace: openshift-kube-descheduler-operator
+                spec:
+                  deschedulingIntervalSeconds: 3600
+                  managementState: Managed
+                  mode: Predictive
+                  profileCustomizations:
+                    devEnableEvictionsInBackground: true
+                  profiles:
+                    - DevPreviewLongLifecycle
+          pruneObjectBehavior: DeleteAll
+          remediationAction: enforce
+          severity: critical
+  remediationAction: enforce

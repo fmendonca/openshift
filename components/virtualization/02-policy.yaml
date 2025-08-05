@@ -3,12 +3,8 @@ kind: Policy
 metadata:
   name: policy-kubevirt-operator
   namespace: open-cluster-management-policies
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
 spec:
   disabled: false
-  remediationAction: enforce
-  severity: medium
   policy-templates:
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1beta1
@@ -17,12 +13,16 @@ spec:
           name: kubevirt-hyperconverged
           namespace: open-cluster-management-policies
         spec:
-          upgradeApproval: Automatic
           complianceConfig:
             catalogSourceUnhealthy: Compliant
             deploymentsUnavailable: NonCompliant
             upgradesAvailable: Compliant
           complianceType: musthave
+          operatorGroup:
+            name: kubevirt-hyperconverged
+            namespace: openshift-cnv
+            targetNamespaces:
+              - openshift-cnv
           remediationAction: enforce
           removalBehavior:
             clusterServiceVersions: Delete
@@ -30,18 +30,118 @@ spec:
             operatorGroups: DeleteIfUnused
             subscriptions: Delete
           severity: medium
-          operatorGroup:
-            name: kubevirt-hyperconverged
-            namespace: openshift-cnv
-            targetNamespaces:
-              - openshift-cnv
           subscription:
-            channel: stable
             name: kubevirt-hyperconverged
             namespace: openshift-cnv
+            channel: stable
             source: redhat-operators
             sourceNamespace: openshift-marketplace
             startingCSV: kubevirt-hyperconverged-operator.v4.18.11
-          versions: 
+          upgradeApproval: Automatic
+          versions:
             - kubevirt-hyperconverged-operator.v4.18.10
             - kubevirt-hyperconverged-operator.v4.18.11
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: kubevirt-hyperconverged-config
+        spec:
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - openshift-cnv
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: hco.kubevirt.io/v1beta1
+                kind: HyperConverged
+                metadata:
+                  name: kubevirt-hyperconverged
+                  namespace: openshift-cnv
+                  annotations:
+                    deployOVS: "false"
+                spec:
+                  applicationAwareConfig:
+                    allowApplicationAwareClusterResourceQuota: false
+                    vmiCalcConfigName: DedicatedVirtualResources
+                  certConfig:
+                    ca:
+                      duration: 48h0m0s
+                      renewBefore: 24h0m0s
+                    server:
+                      duration: 24h0m0s
+                      renewBefore: 12h0m0s
+                  featureGates:
+                    alignCPUs: false
+                    autoResourceLimits: false
+                    deployKubeSecondaryDNS: false
+                    deployTektonTaskResources: false
+                    deployVmConsoleProxy: false
+                    disableMDevConfiguration: false
+                    enableApplicationAwareQuota: false
+                    enableCommonBootImageImport: true
+                    enableManagedTenantQuota: false
+                    nonRoot: true
+                    persistentReservation: true
+                    withHostPassthroughCPU: false
+                  higherWorkloadDensity:
+                    memoryOvercommitPercentage: 400
+                  liveMigrationConfig:
+                    allowAutoConverge: false
+                    allowPostCopy: false
+                    completionTimeoutPerGiB: 800
+                    parallelMigrationsPerCluster: 5
+                    parallelOutboundMigrationsPerNode: 2
+                    progressTimeout: 150
+                  resourceRequirements:
+                    vmiCPUAllocationRatio: 10
+                  tuningPolicy: highBurst
+                  uninstallStrategy: BlockUninstallIfWorkloadsExist
+                  vddkInitImage: quay.io/fcalomen/vddk:v8.0.3
+                  virtualMachineOptions:
+                    disableFreePageReporting: false
+                    disableSerialConsoleLog: true
+                  workloadUpdateStrategy:
+                    batchEvictionInterval: 1m0s
+                    batchEvictionSize: 10
+                    workloadUpdateMethods:
+                      - LiveMigrate
+          remediationAction: enforce
+          severity: medium
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-project-openshift-virtualization-os
+        spec:
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: openshift-virtualization-os-images
+          pruneObjectBehavior: DeleteAll
+          remediationAction: enforce
+          severity: critical
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-project-openshift-cnv
+        spec:
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: openshift-cnv
+          pruneObjectBehavior: DeleteAll
+          remediationAction: enforce
+          severity: low
+  remediationAction: enforce
+
+

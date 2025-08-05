@@ -9,4 +9,4 @@ spec:
   mode: Predictive
   managementState: Managed
   profileCustomizations:
-    devEnableEvictionsInBackground: true  
+    devEnableEvictionsInBackground: true

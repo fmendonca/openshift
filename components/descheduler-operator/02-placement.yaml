@@ -1,0 +1,36 @@
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-kube-descheduler-placement
+  namespace: open-cluster-management-policies
+  creationTimestamp: 2025-08-05T18:21:10Z
+  generation: 1
+  resourceVersion: "10586486"
+  uid: df4b15c2-79ae-4dd0-977b-554e868fc549
+spec:
+  clusterSets:
+    - default
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-kube-descheduler-placement
+  namespace: open-cluster-management-policies
+  creationTimestamp: 2025-08-05T18:21:10Z
+  generation: 1
+  resourceVersion: "10586492"
+  uid: 945d8858-5a95-4db1-be6a-b785c22cc29d
+placementRef:
+  name: policy-kube-descheduler-placement
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: policy-kube-descheduler
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
