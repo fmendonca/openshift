@@ -1,0 +1,26 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd-acm-access
+  namespace: open-cluster-management-policies
+subjects:
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-application-controller
+    namespace: openshift-gitops
+roleRef:
+  kind: ClusterRole
+  name: argocd-acm-policy-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argocd-acm-policy-admin
+rules:
+  - apiGroups: ["cluster.open-cluster-management.io"]
+    resources: ["placements"]
+    verbs: ["get", "list", "create", "update", "patch", "watch"]
+  - apiGroups: ["policy.open-cluster-management.io"]
+    resources: ["policies", "placementbindings"]
+    verbs: ["get", "list", "create", "update", "patch", "watch"]
