@@ -1,0 +1,28 @@
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-mtv-operator-placement
+  namespace: open-cluster-management-policies
+spec:
+  clusterSets:
+    - default
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-mtv-operator-placement
+  namespace: open-cluster-management-policies
+placementRef:
+  name: policy-mtv-operator-placement
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: policy-mtv-operator
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy

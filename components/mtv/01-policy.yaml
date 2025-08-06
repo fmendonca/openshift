@@ -1,0 +1,53 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-mtv-operator
+  namespace: open-cluster-management-policies
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1beta1
+        kind: OperatorPolicy
+        metadata:
+          name: mtv-operator
+        spec:
+          complianceType: musthave
+          operatorGroup:
+            name: default
+            targetNamespaces:
+              - openshift-mtv
+          remediationAction: enforce
+          severity: critical
+          subscription:
+            name: mtv-operator
+            namespace: openshift-mtv
+            channel: release-v2.9
+            source: redhat-operators
+            sourceNamespace: openshift-marketplace
+          upgradeApproval: Automatic
+          versions:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: mtv-config
+        spec:
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - openshift-mtv
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: forklift.konveyor.io/v1beta1
+                kind: ForkliftController
+                metadata:
+                  name: forklift-controller
+                  namespace: openshift-mtv
+                spec:
+                  olm_managed: true
+          remediationAction: enforce
+          severity: medium
+  remediationAction: enforce
